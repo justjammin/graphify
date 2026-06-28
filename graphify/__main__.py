@@ -919,6 +919,10 @@ def main() -> None:
         print("    --graph <path>          path to graph.json (default graphify-out/graph.json)")
         print("  explain \"X\"             plain-language explanation of a node and its neighbors")
         print("    --graph <path>          path to graph.json (default graphify-out/graph.json)")
+        print("  frontmatter             write per-file context cards (few-shot refs, example uses, guardrails)")
+        print("    --graph <path>          path to graph.json (default graphify-out/graph.json)")
+        print("    --out <dir>             output directory (default graphify-out/frontmatter)")
+        print("    --print <source_file>   print one file's frontmatter to stdout instead of writing")
         print("  add <url>               fetch a URL and save it to ./raw, then update the graph")
         print("    --author \"Name\"         tag the author of the content")
         print("    --contributor \"Name\"    tag who added it to the corpus")
@@ -1259,6 +1263,40 @@ def main() -> None:
                 print(f"  --> {G.nodes[nb].get('label', nb)} [{rel}] [{conf}]")
             if len(neighbors) > 20:
                 print(f"  ... and {len(neighbors) - 20} more")
+
+    elif cmd == "frontmatter":
+        from graphify.serve import _communities_from_graph, _load_graph
+        from graphify.frontmatter import build_file_frontmatter, source_files, to_frontmatter
+        graph_path = "graphify-out/graph.json"
+        out_dir = "graphify-out/frontmatter"
+        print_file: str | None = None
+        args = sys.argv[2:]
+        i = 0
+        while i < len(args):
+            if args[i] == "--graph" and i + 1 < len(args):
+                graph_path = args[i + 1]; i += 2
+            elif args[i] == "--out" and i + 1 < len(args):
+                out_dir = args[i + 1]; i += 2
+            elif args[i] == "--print" and i + 1 < len(args):
+                print_file = args[i + 1]; i += 2
+            else:
+                i += 1
+        G = _load_graph(graph_path)
+        communities = _communities_from_graph(G)
+        if print_file:
+            available = source_files(G)
+            if print_file not in available:
+                print(f"error: '{print_file}' has no nodes in the graph.", file=sys.stderr)
+                match = [f for f in available if print_file in f]
+                if match:
+                    print("Did you mean one of:", file=sys.stderr)
+                    for f in match[:5]:
+                        print(f"  {f}", file=sys.stderr)
+                sys.exit(1)
+            print(build_file_frontmatter(G, print_file, communities))
+        else:
+            n = to_frontmatter(G, communities, out_dir)
+            print(f"Frontmatter: {n} cards written to {out_dir}/")
 
     elif cmd == "add":
         if len(sys.argv) < 3:

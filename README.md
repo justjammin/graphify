@@ -251,6 +251,7 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 
 /graphify ./raw --watch            # auto-sync graph as files change (code: instant, docs: notifies you)
 /graphify ./raw --wiki             # build agent-crawlable wiki (index.md + article per community)
+/graphify ./raw --frontmatter      # write per-file context cards (few-shot refs, example uses, guardrails)
 /graphify ./raw --svg              # export graph.svg
 /graphify ./raw --graphml          # export graph.graphml (Gephi, yEd)
 /graphify ./raw --neo4j            # generate cypher.txt for Neo4j
@@ -366,6 +367,8 @@ Audio never leaves your machine. All transcription runs locally.
 **Git hooks** (`graphify hook install`) - installs post-commit and post-checkout hooks. Graph rebuilds automatically after every commit and every branch switch. If a rebuild fails, the hook exits with a non-zero code so git surfaces the error instead of silently continuing. No background process needed.
 
 **Wiki** (`--wiki`) - Wikipedia-style markdown articles per community and god node, with an `index.md` entry point. Point any agent at `index.md` and it can navigate the knowledge base by reading files instead of parsing JSON.
+
+**Frontmatter cards** (`--frontmatter`) - one context card per source file, written as non-destructive sidecars under `graphify-out/frontmatter/` (source files are never modified). Each card carries YAML frontmatter (entities, community, god nodes, confidence breakdown) plus three sections derived from the AST/graph: **few-shot references** (related cross-file entities to study as worked examples), **example uses** (callers/dependents of the file's entities), and **guardrails** (god-node blast radius and AMBIGUOUS/INFERRED links to verify). An agent reads the matching card before editing a file. Generate one on demand with `graphify frontmatter --print <source_file>`.
 
 ## Worked examples
 

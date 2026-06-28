@@ -27,6 +27,7 @@ Turn any folder of files into a navigable knowledge graph with community detecti
 /graphify <path> --mcp                                # start MCP stdio server for agent access
 /graphify <path> --watch                              # watch folder, auto-rebuild on code changes (no LLM needed)
 /graphify <path> --wiki                               # build agent-crawlable wiki (index.md + one article per community)
+/graphify <path> --frontmatter                        # write per-file context cards (few-shot refs, example uses, guardrails)
 /graphify <path> --obsidian --obsidian-dir ~/vaults/my-project  # write vault to custom path (e.g. existing vault)
 /graphify add <url>                                   # fetch URL, save to ./raw, update graph
 /graphify add <url> --author "Name"                   # tag who wrote it
@@ -579,6 +580,38 @@ print(f'Wiki: {n} articles written to graphify-out/wiki/')
 print('  graphify-out/wiki/index.md  ->  agent entry point')
 "
 ```
+
+### Step 6c - Frontmatter cards (only if --frontmatter flag)
+
+**Only run this step if `--frontmatter` was explicitly given in the original command.**
+
+Writes one context card per source file (YAML frontmatter + few-shot references,
+example uses, and guardrails derived from the AST/graph). Cards are non-destructive
+sidecars under `graphify-out/frontmatter/` — source files are never modified. An agent
+can read the matching card before editing a file.
+
+```bash
+$(cat graphify-out/.graphify_python) -c "
+import json
+from graphify.build import build_from_json
+from graphify.frontmatter import to_frontmatter
+from pathlib import Path
+
+extraction = json.loads(Path('graphify-out/.graphify_extract.json').read_text())
+analysis   = json.loads(Path('graphify-out/.graphify_analysis.json').read_text())
+labels_raw = json.loads(Path('graphify-out/.graphify_labels.json').read_text()) if Path('graphify-out/.graphify_labels.json').exists() else {}
+
+G = build_from_json(extraction)
+communities = {int(k): v for k, v in analysis['communities'].items()}
+labels = {int(k): v for k, v in labels_raw.items()}
+
+n = to_frontmatter(G, communities, 'graphify-out/frontmatter', community_labels=labels or None)
+print(f'Frontmatter: {n} cards written to graphify-out/frontmatter/')
+"
+```
+
+You can also generate a single file's card on demand:
+`graphify frontmatter --print <source_file>`.
 
 ### Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag)
 

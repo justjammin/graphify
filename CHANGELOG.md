@@ -2,6 +2,10 @@
 
 Full release notes with details on each version: [GitHub Releases](https://github.com/safishamsi/graphify/releases)
 
+## Unreleased
+
+- Feature: `graphify frontmatter` command (and `/graphify <path> --frontmatter`) generates per-file context cards from the run's AST/graph. Each card is a non-destructive sidecar under `graphify-out/frontmatter/` with YAML frontmatter plus few-shot references, example uses, and guardrails for the file. Use `--print <source_file>` to emit one card to stdout, `--out <dir>` to redirect output.
+
 ## 0.4.23 (2026-04-18)
 
 - Fix: stale skill version warning persists after running `graphify install` when multiple platforms were previously installed — `graphify install` now refreshes `.graphify_version` in all other known skill directories so the warning clears across the board (#178)
